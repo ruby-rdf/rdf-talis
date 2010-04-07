@@ -1,37 +1,28 @@
-# RDF.rb storage adapter skeleton
+# Talis Platform storage adapter for RDF.rb
 
-This is a skeleton repository to create your own RDF.rb storage adapter.  It's
-designed to get you up and running with a new backend as quickly as possible,
-so that you can have working tests right away, allowing you to develop
-iteratively.
+This gem allows you to use the Talis platform as a backend for RDF.rb.
 
-See <http://blog.datagraph.org/2010/04/rdf-repository-howto> for an overview.
+This is currently read-only.
 
-# Getting started:
+Synopsis:
 
- 1. Ensure you have the requirements below.
- 1. Run the tests.  You'll get a lot of `NotImplementedErrors`
- 1. Find and fix the TODO markers in `lib/rdf/myrepository.rb`.   
- 1. Find and fix the TODO markers in `spec/my_repository.spec`.  You may not need to do this if your repository needs no arguments to `new()`.
- 1. Run the tests!  Man, you're awesome!
- 1. Iterate and improve!  If your backend is better served by replacing some of the many methods that an `RDF::Repository` implments, replace them.
+    require 'rdf/talis'
 
-To run tests, run:
+    repo = RDF::Talis::Repository.new('bhuga-dev1')
+    repo.each_statement do | statement |
+      puts statement.inspect
+    end
 
-    spec -cfn spec/my_repository.spec
 
-## Requirements
+## Installation
 
-You'll need the `rdf`, `rdf-spec`, and `rspec` libraries.  The easiest way to install these is via RubyGems.
+The recommended method of installation is via RubyGems
 
-    $ sudo gem install rdf rdf-spec rspec
+    $ sudo gem install rdf-talis
 
 ## Resources
 
  * <http://rdf.rubyforge.org> - RDF.rb's home page
- * <http://blog.datagraph.org/2010/04/rdf-repository-howto> - A blog post how-to on RDF.rb repositories
- * <http://rdf.rubyforge.org/RDF/Repository.html> - RDF.rb's Repository documentation; check here for methods you can replace.
-
 
 ### Support
 
