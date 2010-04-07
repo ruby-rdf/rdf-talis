@@ -17,9 +17,8 @@ describe RDF::Talis::Repository do
       @url  = ENV['talis-store'] || 'bhuga-dev1'
       @user = ENV['talis-user'] || 'bhuga'
       @pass = ENV['talis-pass']
-      @repository = RDF::Talis::Repository.new(@url)
+      #@repository = RDF::Talis::Repository.new(@url)
       @enumerable = RDF::Talis::Repository.new(@url)
-      puts @repository.inspect
     end
    
     after :each do

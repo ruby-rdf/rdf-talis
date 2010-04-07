@@ -1,11 +1,12 @@
 require 'rdf'
+require 'rdf/sparql'
 require 'enumerator'
 require 'rest_client'
 require 'addressable/uri'
 require 'json'
 
 module RDF::Talis
-  class Repository < ::RDF::Repository
+  class Repository < ::RDF::SPARQL::Repository
 
     def initialize(store, options = {})
       @store    = store
@@ -13,40 +14,43 @@ module RDF::Talis
       @url      = Addressable::URI.parse("http://api.talis.com/stores/#{@store}/services/sparql").normalize.to_str
     end
 
-    ##
-    # Enumerates each RDF statement in this repository.
-    #
-    # @yield  [statement]
-    # @yieldparam [RDF::Statement] statement
-    # @return [Enumerator]
-    # @see    http://www.openrdf.org/doc/sesame2/system/ch08.html#d0e304
-    def each(&block)
-      query = "CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }"
-      response = RestClient.post @url, {:query => query}, :accept => 'text/plain'
-      puts response.inspect
-      reader = RDF::NTriples::Reader.new(response.body)
-      reader.each_statement(&block)
-    end
-
-    def has_subject?(subject)
-      query = "ASK { #{RDF::NTriples.serialize(subject)} ?p ?o }"
+    def ask(query)
       response = RestClient.post @url, {:query => query}, :accept => 'application/sparql-results+json'
       JSON.parse(response.body)["boolean"]
     end
 
-    def each_subject
-      return ::Enumerable::Enumerator.new(self,:each_subject) unless block_given?
-      query = "SELECT DISTINCT ?s WHERE { ?s ?p ?o }"
-      response = RestClient.post @url, {:query => query}, :accept => 'application/sparql-results+json'
-      JSON.parse(response.body)["results"]["bindings"].map do |binding|
-        result = case binding["s"]["type"]
-          when "uri"
-            RDF::URI(binding["s"]["value"])
-        end 
-        yield result
-      end
+    def construct(query, &block)
+      response = RestClient.post @url, {:query => query}, :accept => 'text/plain'
+      reader = RDF::NTriples::Reader.new(response.body)
+      reader.each_statement(&block)
     end
 
+    def select(query, &block)
+      response = RestClient.post @url, {:query => query}, :accept => 'application/sparql-results+json'
+      results = []
+      JSON.parse(response.body)["results"]["bindings"].each do |binding|
+        #puts binding.inspect
+        bindings = []
+        binding.each do | name, value |
+          result = case value["type"]
+            when "uri"
+              RDF::URI(value["value"])
+            when "literal"
+              RDF::Literal(value["value"])
+            when "typed-literal"
+              RDF::Literal(value["value"])
+          end 
+          bindings << result
+        end
+        results << bindings
+      end
+      case block_given?
+        when true
+          results.each do |result| yield *result end
+        when false
+          return results
+      end
+    end
 
     # @see RDF::Mutable#insert_statement
     def insert_statement(statement)
