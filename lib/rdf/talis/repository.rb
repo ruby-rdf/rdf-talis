@@ -33,23 +33,13 @@ module RDF::Talis
     end
 
     # @see RDF::Mutable#insert_statement
-    def insert(*statements)
+    def insert_statement(statement)
       changeset = RDF::Repository.new
-      precedings = {}
-      statements.each do |statement|
-        raise ArgumentError.new unless (statement = create_statement(statement)) && statement.valid?
-        change = RDF::Node.new
-        changeset.insert(*new_changeset(change))
-        changeset.insert(*changeset_statement(change, statement, Changeset.addition))
-        if precedings[statement.subject]
-          changeset.insert([change, Changeset.precedingChangeSet, precedings[statement.subject]])
-        end
-        precedings[statement.subject] = change
-      end
+      change = RDF::Node.new
+      changeset.insert(*new_changeset(change))
+      changeset.insert(*changeset_statement(change, statement, Changeset.addition))
 
       update = RDF::Writer.for(:rdfxml).dump(changeset)
-
-      puts RDF::Writer.for(:ntriples).dump(changeset)
 
       url = "http://api.talis.com/stores/#{@store}/meta"
       client = HTTPClient.new
@@ -57,26 +47,15 @@ module RDF::Talis
       client.post(url, update, 'Content-Type' => 'application/vnd.talis.changeset+xml')
     end
 
-    def insert_statement(statement)
-      insert(statement)
-    end
-
     # @see RDF::Mutable#delete_statement
     def delete_statement(statement)
       changeset = RDF::Repository.new
       change = RDF::Node.new
-      puts RDF::Statement.new(change, RDF.type, Changeset.ChangeSet)
-      changeset.insert(RDF::Statement.new(change, RDF.type, Changeset.ChangeSet))
-      changeset.insert(RDF::Statement.new(change, Changeset.changeReason, "Generated in rdf/talis/repository"))
-      changeset.insert(RDF::Statement.new(change, Changeset.createdDate, Time.now))
-      new_node = RDF::Node.new
-      changeset.insert(RDF::Statement.new(change, Changeset.removal, new_node))
-      changeset.insert(RDF::Statement.new(change, Changeset.subjectOfChange, statement.subject))
-      changeset.insert(*reify(statement, new_node))
+      changeset.insert(*new_changeset(change))
+      changeset.insert(*changeset_statement(change, statement, Changeset.removal))
 
       update = RDF::Writer.for(:rdfxml).dump(changeset)
 
-      puts update
       url = "http://api.talis.com/stores/#{@store}/meta"
       client = HTTPClient.new
       client.set_auth(url, @settings[:user], @settings[:pass]) if @settings[:user]
@@ -96,8 +75,7 @@ module RDF::Talis
       client = HTTPClient.new
       url = "http://api.talis.com/stores/#{@store}/jobs"
       client.set_auth(url, @settings[:user], @settings[:pass]) if @settings[:user]
-      client.post(url, update, 'Content-Type' => 'application/rdf+xml')
-
+      client.post(url, update, 'Content-Type' => 'application/rdf+xml').status == 201
     end
 
     def reify(statement,node)
