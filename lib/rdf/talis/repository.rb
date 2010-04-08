@@ -61,7 +61,7 @@ module RDF::Talis
       client.post(url, update, 'Content-Type' => 'application/vnd.talis.changeset+xml')
     end
 
-    def clear
+    def clear_statements
       job = RDF::Node.new
       request = RDF::Repository.new
       request << RDF::Statement.new(job, Bigfoot.jobType,   Bigfoot.ResetDataJob)
