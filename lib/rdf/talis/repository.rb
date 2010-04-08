@@ -4,7 +4,6 @@ require 'sparql/client/repository'
 require 'addressable/uri'
 require 'httpclient'
 require 'rdf/raptor'
-require 'curb'
 
 module RDF::Talis
   class Repository < ::SPARQL::Client::Repository
