@@ -1,9 +1,10 @@
 require 'rdf'
 require 'rdf/talis/changeset'
-require 'sparql/client/repository'
+require 'sparql/client'
 require 'addressable/uri'
 require 'httpclient'
 require 'rdf/raptor'
+require 'enumerator'
 
 module RDF::Talis
   class Repository < ::SPARQL::Client::Repository
@@ -13,6 +14,63 @@ module RDF::Talis
       @settings = options.dup
       @url      = Addressable::URI.parse("http://api.talis.com/stores/#{@store}/services/sparql").to_str
       super(@url)
+    end
+
+    def writable?
+      true
+    end
+
+    def each(&block)
+      return ::Enumerable::Enumerator.new(self,:each) unless block_given?
+      client.construct([:s, :p, :o]).
+             where([:s, :p, :o]).
+             filter("?p != <http://schemas.talis.com/2005/dir/schema#etag>").
+             each_statement(&block)
+    end
+
+    def each_subject(&block)
+      return ::Enumerable::Enumerator.new(self,:each_subject) unless block_given?
+      client.select(:s, :distinct => true).
+             where([:s, :p, :o]).
+             filter("?p != <http://schemas.talis.com/2005/dir/schema#etag>").
+             each { |solution| block.call(solution[:s]) }
+    end
+
+    def each_predicate(&block)
+      return ::Enumerable::Enumerator.new(self,:each_predicate) unless block_given?
+      client.select(:p, :distinct => true).
+             where([:s, :p, :o]).
+             filter("?p != <http://schemas.talis.com/2005/dir/schema#etag>").
+             each { |solution| block.call(solution[:p]) }
+    end
+
+    def each_object(&block)
+      return ::Enumerable::Enumerator.new(self,:each_object) unless block_given?
+      client.select(:o, :distinct => true).
+             where([:s, :p, :o]).
+             filter("?p != <http://schemas.talis.com/2005/dir/schema#etag>").
+             each { |solution| block.call(solution[:o]) }
+    end
+
+    def has_subject?(subject)
+      client.ask.
+             whether([subject, :p, :o]).
+             filter("?p != <http://schemas.talis.com/2005/dir/schema#etag>").
+             true?
+    end
+
+    def count
+      binding = client.query("SELECT COUNT(*) WHERE { ?s ?p ?o .
+                              FILTER ( ?p != <http://schemas.talis.com/2005/dir/schema#etag>)
+                              }").first.to_hash
+      binding[binding.keys.first].value.to_i
+    end
+
+    def empty?
+      client.ask.
+             whether([:s, :p, :o]).
+             filter("?p != <http://schemas.talis.com/2005/dir/schema#etag>").
+             false?
     end
 
     def new_changeset(change)

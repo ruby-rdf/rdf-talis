@@ -16,7 +16,10 @@ module RDF
       property :ResetDataJob
       property :startTime
       property :JobRequest
+    end
 
+    class TalisDir < RDF::Vocabulary('http://schemas.talis.com/2005/dir/schema#')
+      property :etag 
     end
   end
 end

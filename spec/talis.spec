@@ -17,13 +17,13 @@ describe RDF::Talis::Repository do
       @url  = ENV['talis-store'] || 'bhuga-dev1'
       @user = ENV['talis-user'] || 'bhuga'
       @pass = ENV['talis-pass']
-      #@repository = RDF::Talis::Repository.new(@url)
-      @enumerable = RDF::Talis::Repository.new(@url)
+      @repository = RDF::Talis::Repository.new(@url)
+      @enumerable = @repository
     end
    
     after :each do
       #TODO: Anything you need to clean up a test goes here.
-      #@repository.clear
+      #@repository.delete(*@statements)
     end
 
     # @see lib/rdf/spec/repository.rb in RDF-spec
