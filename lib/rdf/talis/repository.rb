@@ -65,6 +65,8 @@ module RDF::Talis
                               }").first.to_hash
       binding[binding.keys.first].value.to_i
     end
+    alias_method :size, :count
+    alias_method :length, :count
 
     def empty?
       client.ask.
