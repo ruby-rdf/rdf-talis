@@ -95,10 +95,7 @@ module RDF::Talis
 
       update = RDF::Writer.for(:rdfxml).dump(changeset)
 
-      url = "http://api.talis.com/stores/#{@store}/meta"
-      client = HTTPClient.new
-      client.set_auth(url, @settings[:user], @settings[:pass]) if @settings[:user]
-      client.post(url, update, 'Content-Type' => 'application/vnd.talis.changeset+xml')
+      post(:content => update) == 201
     end
 
     # @see RDF::Mutable#delete_statement
@@ -110,10 +107,7 @@ module RDF::Talis
 
       update = RDF::Writer.for(:rdfxml).dump(changeset)
 
-      url = "http://api.talis.com/stores/#{@store}/meta"
-      client = HTTPClient.new
-      client.set_auth(url, @settings[:user], @settings[:pass]) if @settings[:user]
-      client.post(url, update, 'Content-Type' => 'application/vnd.talis.changeset+xml')
+      post(:content => update) == 201
     end
 
     def clear_statements
@@ -126,10 +120,18 @@ module RDF::Talis
 
       update = RDF::Writer.for(:rdfxml).dump(request)
 
+      post(:path => 'jobs', :type => 'application/rdf+xml', :content => update) == 201
+    end
+
+    def post(opts)
       client = HTTPClient.new
-      url = "http://api.talis.com/stores/#{@store}/jobs"
+      path = opts[:path] || "meta"
+      type = opts[:type] || "application/vnd.talis.changeset+xml"
+
+      client = HTTPClient.new
+      url = "http://api.talis.com/stores/#{@store}/#{@path}"
       client.set_auth(url, @settings[:user], @settings[:pass]) if @settings[:user]
-      client.post(url, update, 'Content-Type' => 'application/rdf+xml').status == 201
+      client.post(url, opts[:update], 'Content-Type' => type).status
     end
 
   end
