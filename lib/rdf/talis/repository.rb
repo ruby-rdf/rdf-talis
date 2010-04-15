@@ -59,6 +59,13 @@ module RDF::Talis
              true?
     end
 
+    def has_object?(object)
+      client.ask.
+             whether([:s, :p, object]).
+             filter("?p != <http://schemas.talis.com/2005/dir/schema#etag>").
+             true?
+    end
+
     def count
       binding = client.query("SELECT COUNT(*) WHERE { ?s ?p ?o .
                               FILTER ( ?p != <http://schemas.talis.com/2005/dir/schema#etag>)
