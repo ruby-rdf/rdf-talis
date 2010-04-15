@@ -82,11 +82,8 @@ module RDF::Talis
     def changeset_statement(change, statement, operation)
       node = RDF::Node.new
       [RDF::Statement.new(change, operation, node),
-       RDF::Statement.new(change, Changeset.subjectOfChange, statement.subject),
-       RDF::Statement.new(node, RDF.type, RDF[:Statement]),
-       RDF::Statement.new(node, RDF.subject, statement.subject),
-       RDF::Statement.new(node, RDF.predicate, statement.predicate),
-       RDF::Statement.new(node, RDF.object, statement.object)]
+       RDF::Statement.new(change, Changeset.subjectOfChange, statement.subject)] +
+       statement.reified(:subject => node).to_a
     end
 
     # @see RDF::Mutable#insert_statement
@@ -133,15 +130,6 @@ module RDF::Talis
       url = "http://api.talis.com/stores/#{@store}/jobs"
       client.set_auth(url, @settings[:user], @settings[:pass]) if @settings[:user]
       client.post(url, update, 'Content-Type' => 'application/rdf+xml').status == 201
-    end
-
-    def reify(statement,node)
-      statements = []
-      statements << RDF::Statement.new(node, RDF.type, RDF[:Statement])
-      statements << RDF::Statement.new(node, RDF.subject, statement.subject)
-      statements << RDF::Statement.new(node, RDF.predicate, statement.predicate)
-      statements << RDF::Statement.new(node, RDF.object, statement.object)
-      statements
     end
 
   end
