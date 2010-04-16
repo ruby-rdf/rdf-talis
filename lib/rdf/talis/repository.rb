@@ -29,6 +29,19 @@ module RDF::Talis
   # @see http://rdf.rubyforge.org/RDF/Repository.html
   class Repository < ::SPARQL::Client::Repository
 
+    ##
+    # Create a new RDF::Talis::Repository.  Takes a repository name and
+    # optional authentication arguments.
+    #
+    # @param [String] store 
+    # @param [Hash] opts
+    # @return [RDF::Talis::Repository]
+    # @example
+    #     RDF::Talis::Repository.new 'bhuga1-dev'
+    #     # => Read-only access to the bhuga1-dev repository
+    #
+    #     RDF::Talis::Repository.new 'bhuga1-dev, :user => user, :pass => pass
+    #     # => Read-write access to the bhuga1-dev repository
     def initialize(store, options = {})
       @store    = store
       @settings = options.dup
@@ -36,10 +49,13 @@ module RDF::Talis
       super(@url)
     end
 
+    ##
+    # Returns true if authentication information has been provided
     def writable?
-      true
+      !(@settings[:user].nil?)
     end
 
+    # @private
     def each(&block)
       return ::Enumerable::Enumerator.new(self,:each) unless block_given?
       client.construct([:s, :p, :o]).
@@ -48,6 +64,7 @@ module RDF::Talis
              each_statement(&block)
     end
 
+    # @private
     def each_subject(&block)
       return ::Enumerable::Enumerator.new(self,:each_subject) unless block_given?
       client.select(:s, :distinct => true).
@@ -56,6 +73,7 @@ module RDF::Talis
              each { |solution| block.call(solution[:s]) }
     end
 
+    # @private
     def each_predicate(&block)
       return ::Enumerable::Enumerator.new(self,:each_predicate) unless block_given?
       client.select(:p, :distinct => true).
@@ -64,6 +82,7 @@ module RDF::Talis
              each { |solution| block.call(solution[:p]) }
     end
 
+    # @private
     def each_object(&block)
       return ::Enumerable::Enumerator.new(self,:each_object) unless block_given?
       client.select(:o, :distinct => true).
@@ -72,6 +91,7 @@ module RDF::Talis
              each { |solution| block.call(solution[:o]) }
     end
 
+    # @private
     def has_subject?(subject)
       client.ask.
              whether([subject, :p, :o]).
@@ -79,6 +99,7 @@ module RDF::Talis
              true?
     end
 
+    # @private
     def has_object?(object)
       client.ask.
              whether([:s, :p, object]).
@@ -86,6 +107,7 @@ module RDF::Talis
              true?
     end
 
+    # @private
     def count
       binding = client.query("SELECT COUNT(*) WHERE { ?s ?p ?o .
                               FILTER ( ?p != <http://schemas.talis.com/2005/dir/schema#etag>)
@@ -95,6 +117,7 @@ module RDF::Talis
     alias_method :size, :count
     alias_method :length, :count
 
+    # @private
     def empty?
       client.ask.
              whether([:s, :p, :o]).
@@ -115,7 +138,7 @@ module RDF::Talis
        statement.reified(:subject => node).to_a
     end
 
-    # @see RDF::Mutable#insert_statement
+    # @private
     def insert_statement(statement)
       changeset = RDF::Repository.new
       change = RDF::Node.new
@@ -127,6 +150,7 @@ module RDF::Talis
       post(:content => update) == 200
     end
 
+    # @private
     def insert_statements(statements, opts = {})
       changeset = RDF::Repository.new
       precedings = {}
@@ -144,14 +168,12 @@ module RDF::Talis
         precedings[statement.subject] = change
       end
 
-
       update = RDF::Writer.for(:rdfxml).dump(changeset)
 
       post(:content => update) == 202
     end
 
-
-    # @see RDF::Mutable#delete_statement
+    # @private
     def delete_statement(statement)
       if statement.invalid?
         delete_statements(query(statement))
@@ -167,6 +189,7 @@ module RDF::Talis
       end
     end
 
+    # @private
     def delete_statements(statements, opts = {})
       return true if statements.empty?
       changeset = RDF::Repository.new
@@ -186,6 +209,7 @@ module RDF::Talis
       post(:content => update) == 202
     end
 
+    # @private
     def clear_statements
       job = RDF::Node.new
       request = RDF::Repository.new
@@ -199,6 +223,7 @@ module RDF::Talis
       post(:path => 'jobs', :type => 'application/rdf+xml', :content => update) == 201
     end
 
+    # @private
     def query(pattern, &block)
       case pattern
         when RDF::Statement
