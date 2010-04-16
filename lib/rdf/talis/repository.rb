@@ -7,6 +7,9 @@ require 'rdf/raptor'
 require 'enumerator'
 
 module RDF::Talis
+
+  class RepositoryError < StandardError ; end
+
   class Repository < ::SPARQL::Client::Repository
 
     def initialize(store, options = {})
@@ -182,7 +185,11 @@ module RDF::Talis
       client = HTTPClient.new
       url = "http://api.talis.com/stores/#{@store}/#{path}"
       client.set_auth(url, @settings[:user], @settings[:pass]) if @settings[:user]
-      client.post(url, opts[:content], 'Content-Type' => type).status
+      result = client.post(url, opts[:content], 'Content-Type' => type)
+      unless [200,201].include?(result.status)
+        raise RepositoryError, "An error occurred while posting to the Talis store: HTTP code #{result.status}, extra info: #{result.body.content}"
+      end
+      result.status
     end
 
   end
