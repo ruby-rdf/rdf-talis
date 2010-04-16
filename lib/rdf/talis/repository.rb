@@ -23,6 +23,9 @@ module RDF::Talis
   # 2. `#load` does not support a context, as Talis meta stores use different
   # private graphs for varying contexts.
   # 
+  # 3. The Talis store inserts etags along with every RDF subject.  The SPARQL
+  # queries ignore these.
+  #
   # @see http://rdf.rubyforge.org/RDF/Repository.html
   class Repository < ::SPARQL::Client::Repository
 
