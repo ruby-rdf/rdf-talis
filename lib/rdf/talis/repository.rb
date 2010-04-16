@@ -104,8 +104,32 @@ module RDF::Talis
 
       update = RDF::Writer.for(:rdfxml).dump(changeset)
 
-      post(:content => update) == 201
+      post(:content => update) == 200
     end
+
+    def insert_statements(statements, opts = {})
+      changeset = RDF::Repository.new
+      precedings = {}
+      statements.each do |statement|
+        if opts[:context]
+          statement = statement.dup
+          statement.context = opts[:context]
+        end
+        change = RDF::Node.new
+        changeset.insert(*new_changeset(change))
+        changeset.insert(*changeset_statement(change, statement, Changeset.addition))
+        if precedings[statement.subject]
+          changeset.insert([change, Changeset.precedingChangeSet, precedings[statement.subject]])
+        end
+        precedings[statement.subject] = change
+      end
+
+
+      update = RDF::Writer.for(:rdfxml).dump(changeset)
+
+      post(:content => update) == 200
+    end
+
 
     # @see RDF::Mutable#delete_statement
     def delete_statement(statement)
@@ -116,7 +140,25 @@ module RDF::Talis
 
       update = RDF::Writer.for(:rdfxml).dump(changeset)
 
-      post(:content => update) == 201
+      post(:content => update) == 200
+    end
+
+    def delete_statements(statements, opts = {})
+      changeset = RDF::Repository.new
+      precedings = {}
+      statements.each do |statement|
+        change = RDF::Node.new
+        changeset.insert(*new_changeset(change))
+        changeset.insert(*changeset_statement(change, statement, Changeset.removal))
+        if precedings[statement.subject]
+          changeset.insert([change, Changeset.precedingChangeSet, precedings[statement.subject]])
+        end
+        precedings[statement.subject] = change
+      end
+
+      update = RDF::Writer.for(:rdfxml).dump(changeset)
+
+      post(:content => update) == 200
     end
 
     def clear_statements
@@ -138,9 +180,9 @@ module RDF::Talis
       type = opts[:type] || "application/vnd.talis.changeset+xml"
 
       client = HTTPClient.new
-      url = "http://api.talis.com/stores/#{@store}/#{@path}"
+      url = "http://api.talis.com/stores/#{@store}/#{path}"
       client.set_auth(url, @settings[:user], @settings[:pass]) if @settings[:user]
-      client.post(url, opts[:update], 'Content-Type' => type).status
+      client.post(url, opts[:content], 'Content-Type' => type).status
     end
 
   end

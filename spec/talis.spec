@@ -1,8 +1,10 @@
 $:.unshift File.dirname(__FILE__) + "/../lib/"
 $:.unshift File.dirname(__FILE__) + "/../../rdf-spec/lib/"
+$:.unshift File.dirname(__FILE__) + "/../../rdf/lib/"
 
 require 'rdf'
 require 'rdf/spec/enumerable'
+require 'rdf/spec/repository'
 require 'rdf/talis'
 require 'rdf/ntriples'
 
@@ -10,24 +12,24 @@ describe RDF::Talis::Repository do
   context "A Talis RDF Repository" do
   
     before :all do
-      @statements = RDF::Repository.load('http://datagraph.org/jhacker/foaf.nt')
+      @original_repo = RDF::Repository.load('http://datagraph.org/jhacker/foaf.nt')
     end
 
     before :each do
-      @url  = ENV['talis-store'] || 'bhuga-dev1'
-      @user = ENV['talis-user'] || 'bhuga'
-      @pass = ENV['talis-pass']
+      @url  = ENV['talisstore'] || 'bhuga-dev1'
+      @user = ENV['talisuser'] || 'bhuga'
+      @pass = ENV['talispass']
       @repository = RDF::Talis::Repository.new(@url)
       @enumerable = @repository
     end
    
     after :each do
       #TODO: Anything you need to clean up a test goes here.
-      #@repository.delete(*@statements)
+      @repository.delete_statements(@original_repo.to_a)
     end
 
     # @see lib/rdf/spec/repository.rb in RDF-spec
-    it_should_behave_like RDF_Enumerable
+    it_should_behave_like RDF_Repository
   end
 
 end
