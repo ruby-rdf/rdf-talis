@@ -130,7 +130,7 @@ module RDF::Talis
 
       update = RDF::Writer.for(:rdfxml).dump(changeset)
 
-      post(:content => update) == 200
+      post(:content => update) == 202
     end
 
 
@@ -161,7 +161,7 @@ module RDF::Talis
 
       update = RDF::Writer.for(:rdfxml).dump(changeset)
 
-      post(:content => update) == 200
+      post(:content => update) == 202
     end
 
     def clear_statements
@@ -186,7 +186,7 @@ module RDF::Talis
       url = "http://api.talis.com/stores/#{@store}/#{path}"
       client.set_auth(url, @settings[:user], @settings[:pass]) if @settings[:user]
       result = client.post(url, opts[:content], 'Content-Type' => type)
-      unless [200,201].include?(result.status)
+      unless [200,201,202,204].include?(result.status)
         raise RepositoryError, "An error occurred while posting to the Talis store: HTTP code #{result.status}, extra info: #{result.body.content}"
       end
       result.status
