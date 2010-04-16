@@ -136,17 +136,22 @@ module RDF::Talis
 
     # @see RDF::Mutable#delete_statement
     def delete_statement(statement)
-      changeset = RDF::Repository.new
-      change = RDF::Node.new
-      changeset.insert(*new_changeset(change))
-      changeset.insert(*changeset_statement(change, statement, Changeset.removal))
+      if statement.invalid?
+        delete_statements(query(statement))
+      else
+        changeset = RDF::Repository.new
+        change = RDF::Node.new
+        changeset.insert(*new_changeset(change))
+        changeset.insert(*changeset_statement(change, statement, Changeset.removal))
 
-      update = RDF::Writer.for(:rdfxml).dump(changeset)
+        update = RDF::Writer.for(:rdfxml).dump(changeset)
 
-      post(:content => update) == 200
+        post(:content => update) == 200
+      end
     end
 
     def delete_statements(statements, opts = {})
+      return true if statements.empty?
       changeset = RDF::Repository.new
       precedings = {}
       statements.each do |statement|
@@ -160,7 +165,7 @@ module RDF::Talis
       end
 
       update = RDF::Writer.for(:rdfxml).dump(changeset)
-
+      
       post(:content => update) == 202
     end
 

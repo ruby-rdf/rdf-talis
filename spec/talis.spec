@@ -1,6 +1,5 @@
 $:.unshift File.dirname(__FILE__) + "/../lib/"
 $:.unshift File.dirname(__FILE__) + "/../../rdf-spec/lib/"
-$:.unshift File.dirname(__FILE__) + "/../../rdf/lib/"
 
 require 'rdf'
 require 'rdf/spec/enumerable'
@@ -24,7 +23,7 @@ describe RDF::Talis::Repository do
    
     after :each do
       #TODO: Anything you need to clean up a test goes here.
-      @repository.delete_statements(@statements)
+      @repository.delete_statements(@statements) unless @repository.empty?
     end
 
     # @see lib/rdf/spec/repository.rb in RDF-spec
