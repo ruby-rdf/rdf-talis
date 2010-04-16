@@ -10,6 +10,20 @@ module RDF::Talis
 
   class RepositoryError < StandardError ; end
 
+  ##
+  # An RDF::Repository backed by the Talis platform.
+  #
+  # This `RDF::Repository` behaves as with any `RDF::Repository`, with the following caveats:
+  #
+  # 1. `#clear` is implemented via the Talis job system, and clear requests are
+  # timed to be 60 seconds after the time of instantiation, to avoid issues
+  # with different machines being a few seconds off from each other (UTC
+  # conversion is handled).
+  #
+  # 2. `#load` does not support a context, as Talis meta stores use different
+  # private graphs for varying contexts.
+  # 
+  # @see http://rdf.rubyforge.org/RDF/Repository.html
   class Repository < ::SPARQL::Client::Repository
 
     def initialize(store, options = {})
@@ -207,10 +221,13 @@ module RDF::Talis
               statements.extend(RDF::Enumerable, RDF::Queryable)
           end
         else
-          raise ArgumentError, "I can't handle this yet: #{pattern.inspect}"
+          raise ArgumentError, "Unsupported argument to #query: #{pattern.inspect}"
       end
     end
 
+    # Helper to do http posts with digest auth
+    #
+    # @private
     def post(opts)
       client = HTTPClient.new
       path = opts[:path] || "meta"
