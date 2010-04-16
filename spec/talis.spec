@@ -12,7 +12,6 @@ describe RDF::Talis::Repository do
   context "A Talis RDF Repository" do
   
     before :all do
-      @original_repo = RDF::Repository.load('http://datagraph.org/jhacker/foaf.nt')
     end
 
     before :each do
@@ -25,7 +24,7 @@ describe RDF::Talis::Repository do
    
     after :each do
       #TODO: Anything you need to clean up a test goes here.
-      @repository.delete_statements(@original_repo.to_a)
+      @repository.delete_statements(@statements)
     end
 
     # @see lib/rdf/spec/repository.rb in RDF-spec
