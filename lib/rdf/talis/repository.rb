@@ -177,6 +177,35 @@ module RDF::Talis
       post(:path => 'jobs', :type => 'application/rdf+xml', :content => update) == 201
     end
 
+    def query(pattern, &block)
+      case pattern
+        when RDF::Statement
+          query(pattern.to_hash)
+        when Array
+          query(RDF::Statement.new(*pattern))
+        when Hash
+          s = pattern[:subject]   || :s
+          p = pattern[:predicate] || :p
+          o = pattern[:object]   || :o
+          query = client.construct([s, p, o]).where([s, p, o])
+          if (p == :p)
+            query = query.filter("?p != <http://schemas.talis.com/2005/dir/schema#etag>")
+          end
+          statements = []
+          query.each_statement do  |s|
+            statements << s
+          end
+          case block_given?
+            when true
+              statements.each(&block)
+            else
+              statements.extend(RDF::Enumerable, RDF::Queryable)
+          end
+        else
+          raise ArgumentError, "I can't handle this yet: #{pattern.inspect}"
+      end
+    end
+
     def post(opts)
       client = HTTPClient.new
       path = opts[:path] || "meta"
